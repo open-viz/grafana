@@ -3,6 +3,7 @@ package load
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -144,7 +145,7 @@ func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resou
 	if err != nil {
 		return r, err
 	}
-	rv, _, err := removeDefaultHelper(gvs.CUE(), rvInstance.Value())
+	rv, _, _, err := removeDefaultHelper(gvs.CUE(), rvInstance.Value())
 	if err != nil {
 		return r, err
 	}
@@ -155,21 +156,22 @@ func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resou
 	return schema.Resource{Value: re}, nil
 }
 
-func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
+func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, bool, error) {
 	// Since for now, panel definition is open validation,
 	// we need to loop on the input CUE for trimming
 	rvInstance, err := rt.Compile("resource", []byte{})
 	if err != nil {
-		return input, false, err
+		return input, false, false, err
 	}
 	rv := rvInstance.Value()
 
 	switch inputdef.IncompleteKind() {
 	case cue.StructKind:
+		isEmpty := true
 		// Get all fields including optional fields
 		iter, err := inputdef.Fields(cue.Optional(true))
 		if err != nil {
-			return rv, false, err
+			return rv, false, false, err
 		}
 		for iter.Next() {
 			lable, _ := iter.Value().Label()
@@ -179,49 +181,55 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 				continue
 			}
 			if lv.Exists() {
-				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
-				if err == nil && !isEqual {
+				re, isEqual, subEmpty, err := removeDefaultHelper(iter.Value(), lv)
+				if err == nil && !isEqual && !subEmpty {
+					isEmpty = false
 					rv = rv.FillPath(cue.MakePath(cue.Str(lable)), re)
 				}
 			}
 		}
-		return rv, false, nil
+		return rv, false, isEmpty, nil
 	case cue.ListKind:
 		val, _ := inputdef.Default()
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
 		if val.IsConcrete() && err1 == nil && err2 == nil {
-			return rv, true, nil
+			return rv, true, false, nil
 		}
 		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxx ", ele.IncompleteKind())
 		if ele.IncompleteKind() == cue.BottomKind {
-			return rv, true, nil
+			return rv, true, false, nil
 		}
 
 		iter, err := input.List()
 		if err != nil {
-			return rv, true, nil
+			return rv, true, false, nil
 		}
-		index := 0
+		var iterlist []string
 		for iter.Next() {
-			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
-			if err == nil && !isEqual {
-				rv = rv.FillPath(cue.MakePath(cue.Index(index)), re)
-				index++
+			re, isEqual, subEmpty, err := removeDefaultHelper(ele, iter.Value())
+			if err == nil && !isEqual && !subEmpty {
+				reString, err := convertCUEValueToString(re)
+				if err != nil {
+					return rv, true, false, nil
+				}
+				iterlist = append(iterlist, reString)
 			}
 		}
-
-		// rv = rv.FillPath(cue.MakePath(cue.Str(lable)), rv)
-		return rv, false, nil
+		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
+		liInstance, err := rt.Compile("resource", []byte(iterlistContent))
+		if err != nil {
+			return rv, false, false, err
+		}
+		return liInstance.Value(), false, len(iterlist) == 0, nil
 	default:
 		val, _ := inputdef.Default()
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
 		if val.IsConcrete() && err1 == nil && err2 == nil {
-			return input, true, nil
+			return input, true, false, nil
 		}
-		return input, false, nil
+		return input, false, false, nil
 	}
 }
 
