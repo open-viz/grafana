@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
@@ -36,7 +37,8 @@ func notAuthorized(c *models.ReqContext) {
 	}
 
 	writeRedirectCookie(c)
-	c.Redirect(setting.AppSubUrl + "/login")
+	//c.Redirect(setting.AppSubUrl + "/login")
+	c.Redirect(util.GetBaseUrl(c.Req.Host, setting.Env == setting.Prod) + "/user/login?redirect_to=" + c.Req.Host)
 }
 
 func tokenRevoked(c *models.ReqContext, err *models.TokenRevokedError) {

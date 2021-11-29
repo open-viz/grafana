@@ -89,6 +89,7 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 	switch {
 	case h.initContextWithRenderAuth(ctx):
 	case h.initContextWithAPIKey(ctx):
+	case h.initContextWithByteBuilders(ctx):
 	case h.initContextWithBasicAuth(ctx, orgID):
 	case h.initContextWithAuthProxy(ctx, orgID):
 	case h.initContextWithToken(ctx, orgID):

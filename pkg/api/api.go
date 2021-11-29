@@ -215,7 +215,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// create new org
-		apiRoute.Post("/orgs", quota("org"), bind(models.CreateOrgCommand{}), routing.Wrap(CreateOrg))
+		//apiRoute.Post("/orgs", quota("org"), bind(models.CreateOrgCommand{}), routing.Wrap(CreateOrg))
 
 		// search all orgs
 		apiRoute.Get("/orgs", reqGrafanaAdmin, routing.Wrap(SearchOrgs))
@@ -407,8 +407,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(AdminCreateUser))
-		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
+		//adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(AdminCreateUser))
+		//adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
 		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(AdminUpdateUserPermissions))
 		adminRoute.Delete("/users/:id", routing.Wrap(AdminDeleteUser))
 		adminRoute.Post("/users/:id/disable", routing.Wrap(hs.AdminDisableUser))
