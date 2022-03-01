@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        required: true        
+        required: true
         description: Needs to match, exactly, the name of a milestone (NO v prefix)
 jobs:
   main:
@@ -14,7 +14,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main    
+          ref: main
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run github release action
