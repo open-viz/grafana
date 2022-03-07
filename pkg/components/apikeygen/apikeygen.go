@@ -16,9 +16,10 @@ type KeyGenResult struct {
 }
 
 type ApiKeyJson struct {
-	Key   string `json:"k"`
-	Name  string `json:"n"`
-	OrgId int64  `json:"id"`
+	Key    string `json:"k"`
+	Name   string `json:"n"`
+	OrgId  int64  `json:"id"`
+	UserID int64  `json:"uid"`
 }
 
 func New(orgId int64, name string) (KeyGenResult, error) {

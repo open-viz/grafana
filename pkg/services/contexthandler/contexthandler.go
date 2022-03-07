@@ -186,6 +186,17 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 
 	ctx.IsSignedIn = true
 	ctx.SignedInUser = &models.SignedInUser{}
+
+	if decoded.UserID > 0 {
+		query := models.GetSignedInUserQuery{UserId: decoded.UserID, OrgId: apikey.OrgId}
+		if err := bus.Dispatch(&query); err != nil {
+			ctx.JsonApiErr(401, "Authentication error", err)
+			return true
+		}
+
+		ctx.SignedInUser = query.Result
+	}
+
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
