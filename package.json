@@ -258,7 +258,7 @@
     "jquery": "3.5.1",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "lru-cache": "^5.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
